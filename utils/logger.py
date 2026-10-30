@@ -1,10 +1,3 @@
-"""
-utils/logger.py
-===============
-Logger centralizado con salida a consola y archivo .log rotativo.
-Importa 'logger' desde cualquier módulo del proyecto.
-"""
-
 import logging
 import os
 from logging.handlers import RotatingFileHandler
@@ -13,15 +6,7 @@ from config import LOGS_DIR
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 def get_logger(name: str = "facial_access") -> logging.Logger:
-    """
-    Crea (o reutiliza) un logger con handlers de consola y archivo.
 
-    Args:
-        name: Nombre del logger (aparece en cada línea del log).
-
-    Returns:
-        Instancia de logging.Logger configurada.
-    """
     log = logging.getLogger(name)
 
     # Evita duplicar handlers si el logger ya fue inicializado
