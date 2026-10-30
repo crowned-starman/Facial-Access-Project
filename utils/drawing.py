@@ -1,24 +1,10 @@
-"""
-utils/drawing.py
-================
-Funciones de dibujo sobre frames de OpenCV.
-Centraliza todo lo visual para que sea fácil cambiar el look & feel.
-"""
-
 import cv2
 import numpy as np
 import config
 
 
 def draw_face_box(frame: np.ndarray, bbox: list, color: tuple = None) -> None:
-    """
-    Dibuja un rectángulo alrededor del rostro detectado.
 
-    Args:
-        frame: Frame BGR de OpenCV (modificado in-place).
-        bbox:  [x1, y1, x2, y2] en píxeles.
-        color: Tupla BGR. Por defecto usa BOX_COLOR de config.
-    """
     color = color or config.BOX_COLOR
     x1, y1, x2, y2 = [int(v) for v in bbox]
     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
@@ -31,16 +17,7 @@ def draw_label(
     color: tuple = config.COLOR_INFO,
     bg: bool = True,
 ) -> None:
-    """
-    Dibuja texto con fondo semitransparente para legibilidad.
 
-    Args:
-        frame:    Frame BGR de OpenCV (modificado in-place).
-        text:     Cadena a mostrar.
-        position: (x, y) esquina inferior-izquierda del texto.
-        color:    Color BGR del texto.
-        bg:       Si True, dibuja fondo oscuro detrás del texto.
-    """
     font       = cv2.FONT_HERSHEY_SIMPLEX
     scale      = config.FONT_SCALE
     thickness  = config.FONT_THICKNESS
@@ -63,15 +40,7 @@ def draw_access_result(
     username: str = "",
     similarity: float = 0.0,
 ) -> None:
-    """
-    Dibuja el resultado de acceso (GRANTED / DENIED) en la parte superior del frame.
 
-    Args:
-        frame:      Frame BGR de OpenCV.
-        granted:    True → acceso permitido, False → denegado.
-        username:   Nombre del usuario reconocido (solo si granted=True).
-        similarity: Puntuación de similitud coseno.
-    """
     h, w = frame.shape[:2]
 
     if granted:
@@ -90,13 +59,7 @@ def draw_access_result(
 
 
 def draw_fps(frame: np.ndarray, fps: float) -> None:
-    """
-    Muestra el contador de FPS en la esquina inferior derecha.
 
-    Args:
-        frame: Frame BGR de OpenCV.
-        fps:   Valor calculado de frames por segundo.
-    """
     h, w = frame.shape[:2]
     text = f"FPS: {fps:.1f}"
     draw_label(frame, text, (w - 120, h - 14), color=config.COLOR_INFO)
@@ -108,15 +71,7 @@ def draw_register_overlay(
     total_samples: int,
     username: str,
 ) -> None:
-    """
-    Overlay informativo durante el proceso de registro.
 
-    Args:
-        frame:         Frame BGR de OpenCV.
-        sample_count:  Muestras capturadas hasta ahora.
-        total_samples: Total de muestras requeridas.
-        username:      Nombre del usuario en registro.
-    """
     h, w = frame.shape[:2]
     cv2.rectangle(frame, (0, 0), (w, 55), (20, 20, 20), -1)
     draw_label(frame, f"REGISTERING: {username}", (12, 34), color=config.COLOR_DETECTING, bg=False)
