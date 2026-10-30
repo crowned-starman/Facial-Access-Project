@@ -1,9 +1,6 @@
 """
 core/camera.py
-==============
-Abstracción de la webcam con OpenCV.
-Centraliza la apertura, lectura y liberación de la cámara.
-En fases futuras, este módulo puede swappearse por un stream RTSP o una cámara industrial.
+
 """
 
 import cv2
@@ -15,13 +12,6 @@ from utils.logger import logger
 
 
 class Camera:
-    """
-    Wrapper sobre cv2.VideoCapture con manejo de errores y configuración automática.
-
-    Uso como context manager (recomendado):
-        with Camera() as cam:
-            ret, frame = cam.read()
-    """
 
     def __init__(self, index: int = config.CAMERA_INDEX):
         """
