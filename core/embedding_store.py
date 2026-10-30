@@ -1,17 +1,3 @@
-"""
-core/embedding_store.py
-=======================
-Gestión persistente de embeddings faciales en disco.
-
-Estructura en disco:
-  data/embeddings/
-  └── {username}.npy   ← array de shape (N, 512) con N muestras del usuario
-
-¿Por qué múltiples muestras por usuario?
-  Promediar N embeddings capturados en condiciones ligeramente distintas
-  (ángulo, luz) hace el embedding representativo más robusto.
-  En producción esto se reemplazaría por una base de datos vectorial (Qdrant, Weaviate...).
-"""
 
 import os
 import numpy as np
@@ -22,12 +8,6 @@ from utils.logger import logger
 
 
 class EmbeddingStore:
-    """
-    CRUD de embeddings en archivos .npy por usuario.
-
-    Attributes:
-        _store: Dict[str, np.ndarray] — mapa username → array (N, 512) en memoria.
-    """
 
     def __init__(self):
         os.makedirs(config.EMBEDDINGS_DIR, exist_ok=True)
@@ -64,12 +44,7 @@ class EmbeddingStore:
         logger.info("Embeddings guardados → %s (%d muestras)", path, len(embeddings))
 
     def delete_user(self, username: str) -> bool:
-        """
-        Elimina un usuario del store y del disco.
-
-        Returns:
-            True si se eliminó correctamente, False si no existía.
-        """
+     
         if username not in self._store:
             return False
         del self._store[username]
@@ -87,28 +62,7 @@ class EmbeddingStore:
         query_embedding: np.ndarray,
         threshold: float = config.SIMILARITY_THRESHOLD,
     ) -> Tuple[Optional[str], float]:
-        """
-        Compara query_embedding contra todos los registros y retorna el mejor match.
 
-        Algoritmo:
-          1. Para cada usuario, calcula la similitud coseno entre query_embedding
-             y CADA una de sus N muestras.
-          2. Toma el máximo (similitud pico) → más robusto que el promedio.
-          3. Retorna el usuario con mayor similitud si supera el threshold.
-
-        Similitud coseno:
-          cos(θ) = (A · B) / (||A|| × ||B||)
-          Como ambos vectores están normalizados L2, reduce a: A · B (producto punto)
-          Rango: [-1, 1] donde 1 = idéntico, 0 = ortogonal, -1 = opuesto.
-
-        Args:
-            query_embedding: Vector 512-d normalizado del rostro a identificar.
-            threshold:       Mínima similitud para considerar match.
-
-        Returns:
-            Tupla (username, similarity) si hay match.
-            Tupla (None, best_similarity) si nadie supera el threshold.
-        """
         if not self._store:
             logger.warning("No hay usuarios registrados en el store.")
             return None, 0.0
