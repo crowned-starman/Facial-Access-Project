@@ -1,23 +1,8 @@
-"""
-utils/fps_counter.py
-====================
-Contador de FPS con ventana deslizante para suavizar el valor mostrado.
-"""
-
 import time
 from collections import deque
 
 
 class FPSCounter:
-    """
-    Calcula FPS promedio usando una ventana de las últimas N mediciones.
-
-    Uso:
-        fps = FPSCounter(window=30)
-        while True:
-            fps.tick()
-            print(fps.get())
-    """
 
     def __init__(self, window: int = 30):
         """
@@ -34,12 +19,7 @@ class FPSCounter:
         self._last = now
 
     def get(self) -> float:
-        """
-        Retorna el FPS promedio actual.
-
-        Returns:
-            FPS como float. Retorna 0.0 si no hay datos aún.
-        """
+        
         if not self._times:
             return 0.0
         avg_delta = sum(self._times) / len(self._times)
