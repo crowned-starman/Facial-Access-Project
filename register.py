@@ -20,6 +20,7 @@ Controles:
 
 import sys
 import os
+import re
 import numpy as np
 import cv2
 
@@ -51,13 +52,11 @@ def get_username() -> str:
         if not name:
             print("  El nombre no puede estar vacío.")
             continue
-        # Caracteres seguros para nombre de archivo
-        safe_name = "".join(c for c in name if c.isalnum() or c in (" ", "_", "-")).strip()
-        if not safe_name:
-            print("  Usa solo letras, números, guiones o espacios.")
+        identifier = "_".join(name.split())
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", identifier):
+            print("  Usa 1-64 caracteres ASCII: letras, números, _ o -.")
             continue
-        # Reemplaza espacios con guión bajo para el nombre de archivo
-        return safe_name.replace(" ", "_")
+        return identifier
 
 
 def register_user(username: str) -> bool:
@@ -92,17 +91,19 @@ def register_user(username: str) -> bool:
         while True:
             ret, frame = cam.read()
             if not ret or frame is None:
-                logger.error("No se pudo leer frame de la cámara.")
-                break
+                logger.error("No se pudo leer frame de la cámara. Se descarta el registro.")
+                return False
 
             fps.tick()
             faces = analyzer.detect(frame)
 
             # Validaciones
             if len(faces) == 0:
+                frame_counter = 0
                 draw_label(frame, "No se detecta rostro", (20, 80), color=config.COLOR_DENIED)
 
             elif len(faces) > 1:
+                frame_counter = 0
                 # Solo un rostro durante el registro para evitar ambigüedad
                 draw_label(
                     frame,
@@ -152,8 +153,9 @@ def register_user(username: str) -> bool:
             if len(collected_embeddings) >= SAMPLES_NEEDED:
                 break
 
-    if not collected_embeddings:
-        logger.error("No se recopilaron muestras. Registro fallido.")
+    if len(collected_embeddings) != SAMPLES_NEEDED:
+        logger.error("Registro incompleto (%d/%d): no se guardan datos.",
+                     len(collected_embeddings), SAMPLES_NEEDED)
         return False
 
     # Guarda el array de shape (N, 512) en disco

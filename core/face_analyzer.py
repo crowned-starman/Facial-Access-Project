@@ -6,7 +6,6 @@ Arquitectura:
 """
 
 import numpy as np
-import insightface
 from insightface.app import FaceAnalysis
 
 import config
@@ -39,7 +38,7 @@ class FaceAnalyzer:
 
         try:
             faces = self._app.get(frame)
-            return faces if faces else []
+            return faces if faces is not None else []
         except Exception as exc:
             logger.error("Error durante la detección: %s", exc)
             return []
@@ -54,4 +53,6 @@ class FaceAnalyzer:
         # Normalización L2: convierte el vector a norma unitaria para que
         # la similitud coseno sea equivalente al producto punto.
         norm = np.linalg.norm(emb)
-        return emb / norm if norm > 0 else emb
+        if emb.shape != (512,) or not np.all(np.isfinite(emb)) or norm <= 1e-12:
+            raise ValueError("Embedding facial inválido: se esperan 512 números finitos no nulos.")
+        return emb / norm

@@ -34,7 +34,7 @@ REGISTER_DELAY_FRAMES  = 10            # Frames de espera entre capturas
 #   - 0.5 → más permisivo (tolerante a cambios de luz/ángulo)
 #   - 0.6 → equilibrado (recomendado para MVP)
 #   - 0.7 → más estricto (producción con buena iluminación)
-SIMILARITY_THRESHOLD   = 0.55
+SIMILARITY_THRESHOLD   = 0.55  # Solo demostración: validar FAR/FRR
 
 # ─── UI / Display ─────────────────────────────────────────────────────────────
 FONT_SCALE        = 0.8

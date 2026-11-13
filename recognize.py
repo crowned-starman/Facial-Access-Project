@@ -90,10 +90,23 @@ def run_recognition() -> None:
                     print(f"  Usuarios registrados: {store.users}")
                 continue
 
-            # Procesa cada rostro detectado 
-            # Nota: en control de acceso normalmente se espera 1 sola persona.
-            # Este loop soporta múltiples para mayor flexibilidad futura.
-            granted_any = False
+            # Fallar cerrado si hay múltiples personas ante la cámara.
+            if len(faces) != 1:
+                for face in faces:
+                    draw_face_box(frame, face.bbox, color=config.COLOR_DENIED)
+                draw_access_result(frame, granted=False)
+                draw_label(frame, "Multiples rostros: acceso denegado", (20, 80),
+                           color=config.COLOR_DENIED)
+                draw_fps(frame, fps.get())
+                cv2.imshow(WINDOW_NAME, frame)
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
+                    break
+                if key == ord("r"):
+                    print(f"  Usuarios registrados: {store.users}")
+                continue
+
+            # Procesa un único rostro verificado
 
             for face in faces:
                 # 1. Genera el embedding del rostro actual
@@ -120,16 +133,12 @@ def run_recognition() -> None:
                 draw_label(frame, label, (x1, max(y1 - 10, 20)), color=label_color)
 
                 if granted:
-                    granted_any = True
-                    logger.info("ACCESO PERMITIDO → %s (sim=%.3f)", username, similarity)
+                    logger.debug("Coincidencia biométrica → %s (sim=%.3f)", username, similarity)
                 else:
-                    logger.info("ACCESO DENEGADO (mejor sim=%.3f)", similarity)
+                    logger.debug("Sin coincidencia biométrica (sim=%.3f)", similarity)
 
-            #  Banner global de resultado
-            # Muestra el resultado del primer rostro en el banner superior
-            primary_face       = faces[0]
-            primary_embedding  = analyzer.get_embedding(primary_face)
-            primary_name, primary_sim = store.find_match(primary_embedding, config.SIMILARITY_THRESHOLD)
+            # Resultado del único rostro, sin recalcular el embedding
+            primary_name, primary_sim = username, similarity
 
             draw_access_result(
                 frame,
