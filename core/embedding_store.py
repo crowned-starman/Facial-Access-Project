@@ -53,7 +53,7 @@ class EmbeddingStore:
                     raise ValueError("No se aceptan enlaces simbólicos.")
                 vectors = np.load(path, allow_pickle=False)
                 self._store[username] = self._validate_embeddings(vectors)
-            except (OSError, ValueError, TypeError) as exc:
+            except (OSError, ValueError, TypeError, EOFError) as exc:
                 logger.error("Se ignoró archivo biométrico inválido '%s': %s", fname, exc)
         logger.info("Usuarios registrados en memoria: %d", len(self._store))
 
