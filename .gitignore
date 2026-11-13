@@ -1,0 +1,18 @@
+# Environments and Python caches
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+
+# Biometrics and operating logs
+data/
+logs/
+*.npy
+*.npz
+*.onnx
+.env
+.env.*
+!.env.example

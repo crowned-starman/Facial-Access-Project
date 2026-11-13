@@ -21,7 +21,7 @@
 Detecta rostros en tiempo real usando tu webcam. Si el rostro pertenece a un usuario registrado, muestra **ACCESS GRANTED**. Si no, **ACCESS DENIED**. Todo corre localmente, sin APIs externas ni conexión a internet.
 
 ```
-Webcam → RetinaFace (detección) → ArcFace (embedding 512-d) → Similitud coseno → Resultado
+Webcam → SCRFD (detección) → ArcFace (embedding 512-d) → Similitud coseno → Resultado
 ```
 
 ---
@@ -75,7 +75,7 @@ facial_access_mvp/
 
 | Requisito | Versión mínima |
 |-----------|---------------|
-| Python | 3.9+ |
+| Python | 3.10+ |
 | Webcam | Cualquier cámara compatible con OpenCV |
 | RAM | 4 GB (8 GB recomendado) |
 | GPU | Opcional — CUDA acelera la detección |
@@ -157,13 +157,13 @@ python recognize.py
 
 ## Cómo funciona
 
-### 1. Detección — RetinaFace
+### 1. Detección — SCRFD
 
-InsightFace usa **RetinaFace** para localizar rostros en cada frame. Retorna coordenadas `[x1, y1, x2, y2]` y un score de confianza. Los rostros con baja confianza se descartan automáticamente.
+InsightFace usa **SCRFD** para localizar rostros en cada frame. Retorna coordenadas `[x1, y1, x2, y2]` y un score de confianza. Los rostros con baja confianza se descartan automáticamente.
 
 ### 2. Embedding — ArcFace
 
-**ArcFace** (ResNet-100 con *angular margin loss*) convierte cada rostro en un vector de **512 floats**. Este vector es:
+**ArcFace** (ResNet-50 con *angular margin loss*) convierte cada rostro en un vector de **512 floats**. Este vector es:
 - Único por identidad biométrica
 - Robusto a cambios de iluminación y ángulo moderados
 - Normalizado a norma unitaria (L2) para simplificar la comparación
@@ -182,15 +182,15 @@ similitud = embedding_query · embedding_registrado
 | `~0.55` | Umbral de match (default) |
 | `~0.0` | Personas distintas |
 
-### 4. Threshold tuning
+### 4. Threshold tuning (solo demostración)
 
 Ajusta `SIMILARITY_THRESHOLD` en `config.py` según tu entorno:
 
 | Valor | Cuándo usarlo |
 |-------|--------------|
 | `0.45` | Iluminación variable, cámara de baja calidad |
-| `0.55` | **Default MVP** — buen balance precisión/recall |
-| `0.65` | Producción con buena iluminación y cámara HD |
+| `0.55` | **Default MVP no calibrado** — requiere evaluación FAR/FRR |
+| `0.65` | Valor ilustrativo más estricto, no apto para producción sin validación |
 
 ---
 
@@ -274,11 +274,11 @@ INSIGHTFACE_MODEL_NAME = "buffalo_s"
 
 | Tecnología | Rol |
 |------------|-----|
-| **Python 3.9+** | Lenguaje base |
+| **Python 3.10+** | Lenguaje base |
 | **OpenCV** | Captura de video y rendering |
 | **InsightFace** | Pipeline de detección y reconocimiento facial |
-| **ArcFace (ResNet-100)** | Generación de embeddings 512-d |
-| **RetinaFace** | Detección de rostros en frames |
+| **ArcFace (ResNet-50)** | Generación de embeddings 512-d |
+| **SCRFD** | Detección de rostros en frames |
 | **NumPy** | Álgebra lineal, persistencia `.npy` |
 | **ONNX Runtime** | Inferencia optimizada (CPU/GPU) |
 
@@ -286,10 +286,32 @@ INSIGHTFACE_MODEL_NAME = "buffalo_s"
 
 ## Licencia
 
-MIT — libre para uso educativo y comercial con atribución.
+El código propio de este repositorio es MIT. Los pesos de modelos preentrenados de InsightFace (por ejemplo, buffalo_l) están destinados a investigación no comercial; hay que obtener una licencia apropiada antes de un uso comercial.
 
 ---
 
 <div align="center">
 Construido como base escalable para sistemas biométricos de control de acceso.
 </div>
+
+
+## Advertencias y validación de seguridad
+
+Este repositorio es **un prototipo de reconocimiento biométrico**, no un sistema listo para controlar una puerta física. No dispone de detección de vida (*presentation attack detection*), roles o permisos, consentimiento gestionado, ni auditoría de acceso. Las fotografías, pantallas y otras presentaciones pueden engañar al modelo. No conectes una cerradura o torniquete real a estos resultados.
+
+- Los embeddings en `.npy` **no están cifrados**. Los archivos nuevos se crean con permisos restrictivos en POSIX, pero deben protegerse disco, copias de seguridad y cuentas del sistema. No subas datos biométricos a GitHub.
+- Con más de un rostro presente se deniega el resultado global. Esto no sustituye un mecanismo anti-suplantación.
+- El umbral de similitud `0.55` **no está calibrado**. Antes de usar biometría real evalúa FAR, FRR, iluminación, cámaras y grupos de prueba separados del entrenamiento.
+- Los nombres de usuario para nuevos registros admiten letras ASCII, dígitos, guion y guion bajo; esto evita rutas arbitrarias.
+- Los modelos preentrenados InsightFace tienen restricciones de uso no comercial. Verifica sus términos en https://github.com/deepinsight/insightface antes de cualquier comercialización.
+
+## Pruebas automatizadas
+
+Las pruebas unitarias del almacén no requieren una cámara ni pesos del modelo:
+
+```bash
+python -m pip install numpy
+python -m unittest discover -s tests -v
+```
+
+El workflow de GitHub Actions ejecuta estas pruebas y comprueba la sintaxis en Python 3.10 y 3.12. Las pruebas del pipeline con cámara y la seguridad biométrica requieren equipos y datos de prueba reales.
